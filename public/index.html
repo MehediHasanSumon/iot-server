@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IoT Device Control Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #131b2e;
+      --bg-card: #1a233b;
+      --border-color: #273454;
+      --text-main: #f3f4f6;
+      --text-muted: #94a3b8;
+      --color-on: #10b981;
+      --color-on-glow: rgba(16, 185, 129, 0.35);
+      --color-off: #ef4444;
+      --color-off-glow: rgba(239, 68, 68, 0.35);
+      --color-off-neutral: #475569;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at top, #16203a 0%, var(--bg-primary) 70%);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 30px 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1050px;
+    }
+
+    /* Header */
+    header {
+      text-align: center;
+      margin-bottom: 35px;
+      position: relative;
+    }
+
+    .badge-iot {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(59, 130, 246, 0.15);
+      color: #60a5fa;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      padding: 4px 12px;
+      border-radius: 9999px;
+      margin-bottom: 12px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 30px;
+    }
+
+    .server-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn-tool {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-tool:hover {
+      background: var(--border-color);
+      transform: translateY(-1px);
+    }
+
+    .btn-tool.all-on {
+      border-color: rgba(16, 185, 129, 0.4);
+      color: #34d399;
+    }
+    .btn-tool.all-on:hover {
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .btn-tool.all-off {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #f87171;
+    }
+    .btn-tool.all-off:hover {
+      background: rgba(239, 68, 68, 0.15);
+    }
+
+    /* Device Cards Grid */
+    .devices-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 22px;
+      margin-bottom: 35px;
+    }
+
+    .device-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .device-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+    }
+
+    .device-card.is-on {
+      border-color: rgba(16, 185, 129, 0.5);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+    }
+
+    .device-card.is-off {
+      border-color: var(--border-color);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .device-icon-box {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
+    }
+
+    .device-card.is-on .device-icon-box {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--color-on);
+      color: var(--color-on);
+      box-shadow: 0 0 15px var(--color-on-glow);
+    }
+
+    .device-card.is-off .device-icon-box {
+      color: var(--text-muted);
+    }
+
+    .status-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.2s ease;
+    }
+
+    .status-pill.on {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.4);
+    }
+
+    .status-pill.off {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .device-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .device-id-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    /* Buttons Section */
+    .button-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: auto;
+    }
+
+    .btn-device {
+      border: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .btn-device:active {
+      transform: scale(0.96);
+    }
+
+    /* ON Button */
+    .btn-on {
+      background: #1f2937;
+      color: #9ca3af;
+      border: 1px solid #374151;
+    }
+
+    .device-card.is-on .btn-on {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px var(--color-on-glow);
+      border-color: #10b981;
+    }
+
+    .btn-on:hover:not(.active) {
+      background: #065f46;
+      color: #ecfdf5;
+      border-color: #10b981;
+    }
+
+    /* OFF Button */
+    .btn-off {
+      background: #1f2937;
+      color: #9ca3af;
+      border: 1px solid #374151;
+    }
+
+    .device-card.is-off .btn-off {
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 14px var(--color-off-glow);
+      border-color: #ef4444;
+    }
+
+    .btn-off:hover:not(.active) {
+      background: #7f1d1d;
+      color: #fef2f2;
+      border-color: #ef4444;
+    }
+
+    .card-footer {
+      margin-top: 14px;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* API Info Section */
+    .api-info-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-top: 10px;
+    }
+
+    .api-info-title {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .code-badge {
+      background: #0f172a;
+      border: 1px solid var(--border-color);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      color: #93c5fd;
+    }
+
+    .api-endpoints-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .endpoint-item {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.78rem;
+      background: var(--bg-primary);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+    }
+
+    .endpoint-item span.method {
+      font-weight: bold;
+      color: #10b981;
+      margin-right: 6px;
+    }
+    .endpoint-item span.method.post {
+      color: #3b82f6;
+    }
+
+    /* Toast Notification */
+    #toast {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 12px 20px;
+      border-radius: 10px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+      border: 1px solid #334155;
+      font-size: 0.88rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge-iot">
+        <span class="status-dot"></span>
+        IoT Hardware Controller
+      </div>
+      <h1>Device Control Dashboard</h1>
+      <p class="subtitle">Real-time Node.js & MySQL device status testing panel</p>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="server-status">
+        <span>Status:</span>
+        <span id="connection-status" style="font-weight: 600; color: #10b981;">Connected</span>
+        <span style="color: var(--text-muted);">| Auto-Sync: 3s</span>
+      </div>
+      <div class="toolbar-actions">
+        <button class="btn-tool" onclick="fetchDevices()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+          Refresh
+        </button>
+        <button class="btn-tool all-on" onclick="setAllDevices('on')">
+          All ON
+        </button>
+        <button class="btn-tool all-off" onclick="setAllDevices('off')">
+          All OFF
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 Device Cards Grid -->
+    <div class="devices-grid" id="devices-container">
+      <!-- Loading placeholders -->
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
+        Connecting to MySQL server and loading devices...
+      </div>
+    </div>
+
+    <!-- API Info for IoT microcontrollers -->
+    <div class="api-info-box">
+      <div class="api-info-title">
+        <svg width="18" height="18" fill="none" stroke="#60a5fa" stroke-width="2" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <span>IoT Hardware Endpoints (ESP8266 / ESP32 / Arduino / HTTP)</span>
+      </div>
+      <p style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 8px;">
+        These URLs can be called directly by your IoT microcontroller or curl for quick testing:
+      </p>
+      <div class="api-endpoints-list">
+        <div class="endpoint-item"><span class="method">GET</span> /api/devices (All status)</div>
+        <div class="endpoint-item"><span class="method">GET</span> /api/devices/1?format=plain (Raw "on" / "off")</div>
+        <div class="endpoint-item"><span class="method">GET</span> /api/devices/1/set/on (Direct Turn ON)</div>
+        <div class="endpoint-item"><span class="method">GET</span> /api/devices/1/set/off (Direct Turn OFF)</div>
+        <div class="endpoint-item"><span class="method post">POST</span> /api/devices/1/toggle (Toggle state)</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const API_URL = '/api/devices';
+    let devicesState = [];
+
+    // SVG icons
+    const iconPower = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18.36 6.64a9 9 0 1 1-12.73 0M12 2v10"/></svg>`;
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    async function fetchDevices() {
+      try {
+        const response = await fetch(API_URL);
+        const result = await response.json();
+        if (result.success) {
+          devicesState = result.data;
+          renderDevices();
+          document.getElementById('connection-status').textContent = 'Connected';
+          document.getElementById('connection-status').style.color = '#10b981';
+        } else {
+          showToast('Failed to load devices: ' + result.error);
+        }
+      } catch (err) {
+        document.getElementById('connection-status').textContent = 'Disconnected';
+        document.getElementById('connection-status').style.color = '#ef4444';
+        console.error('Fetch error:', err);
+      }
+    }
+
+    async function setDeviceStatus(id, targetStatus) {
+      try {
+        const response = await fetch(`${API_URL}/${id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: targetStatus })
+        });
+        const result = await response.json();
+        if (result.success) {
+          showToast(`Device ${id} set to ${targetStatus.toUpperCase()}`);
+          await fetchDevices();
+        } else {
+          showToast('Error: ' + result.message);
+        }
+      } catch (err) {
+        showToast('Network error while updating device');
+        console.error(err);
+      }
+    }
+
+    async function setAllDevices(targetStatus) {
+      const promises = [1, 2, 3, 4].map(id =>
+        fetch(`${API_URL}/${id}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: targetStatus })
+        })
+      );
+      await Promise.all(promises);
+      showToast(`All devices turned ${targetStatus.toUpperCase()}`);
+      await fetchDevices();
+    }
+
+    function renderDevices() {
+      const container = document.getElementById('devices-container');
+      if (!devicesState || devicesState.length === 0) {
+        container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">No devices found.</div>`;
+        return;
+      }
+
+      container.innerHTML = devicesState.map(dev => {
+        const isOn = dev.status.toLowerCase() === 'on';
+        const cardClass = isOn ? 'is-on' : 'is-off';
+        const pillText = isOn ? 'ON' : 'OFF';
+        const pillClass = isOn ? 'on' : 'off';
+        const lastUpdated = dev.updated_at ? new Date(dev.updated_at).toLocaleTimeString() : '--:--:--';
+
+        return `
+          <div class="device-card ${cardClass}" id="card-${dev.id}">
+            <div class="card-top">
+              <div class="device-icon-box">
+                ${iconPower}
+              </div>
+              <span class="status-pill ${pillClass}">${pillText}</span>
+            </div>
+
+            <div class="device-title">${dev.name}</div>
+            <div class="device-id-tag">ID: #${dev.id} | Relay Port ${dev.id}</div>
+
+            <!-- ON & OFF Buttons -->
+            <div class="button-group">
+              <button
+                class="btn-device btn-on ${isOn ? 'active' : ''}"
+                onclick="setDeviceStatus(${dev.id}, 'on')"
+              >
+                ON
+              </button>
+              <button
+                class="btn-device btn-off ${!isOn ? 'active' : ''}"
+                onclick="setDeviceStatus(${dev.id}, 'off')"
+              >
+                OFF
+              </button>
+            </div>
+
+            <div class="card-footer">
+              Updated: ${lastUpdated}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Initial fetch
+    fetchDevices();
+
+    // Auto-refresh every 3 seconds for live IoT sync
+    setInterval(fetchDevices, 3000);
+  </script>
+</body>
+</html>

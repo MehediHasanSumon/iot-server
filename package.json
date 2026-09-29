@@ -1,0 +1,24 @@
+{
+  "name": "iot-device-controller",
+  "version": "1.0.0",
+  "description": "IoT 4-Device Status Controller with Node.js, Express, and MySQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "iot",
+    "express",
+    "mysql",
+    "controller"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.12.0"
+  }
+}
